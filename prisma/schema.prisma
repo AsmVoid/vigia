@@ -1,0 +1,521 @@
+// =====================================================
+// V.I.G.I.A — OSINT Platform · Prisma 7 (PostgreSQL)
+// =====================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ================= AUTH & SESSÕES =================
+
+model User {
+  id               String   @id @default(cuid())
+  username         String   @unique
+  name             String   @default("Investigador")
+  email            String   @unique
+  emailVerified    Boolean  @default(false)
+  image            String?
+  passwordHash     String?
+  displayName      String   @default("Investigador")
+  photo            String?
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  sessions     Session[]
+  accounts     Account[]
+  twoFactors   TwoFactor[]
+  auditLogs    AuditLog[]
+  entities     Entity[]
+  groups       Group[]
+  activityLogs ActivityLog[]
+}
+
+model Session {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token           String    @unique
+  ipAddress       String?
+  userAgent       String?
+  loginAt         DateTime  @default(now())
+  logoutAt        DateTime?
+  durationSeconds Int?
+  expiresAt       DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([token])
+}
+
+// ================= BETTER AUTH =================
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model TwoFactor {
+  id                     String    @id @default(cuid())
+  secret                 String
+  backupCodes            String
+  userId                 String
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified               Boolean   @default(false)
+  failedVerificationCount Int      @default(0)
+  lockedUntil            DateTime?
+
+  @@index([userId])
+}
+
+// ================= GRUPOS & ENTIDADES =================
+
+model Group {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  parentId    String?
+  parent      Group?   @relation("GroupHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Group[]  @relation("GroupHierarchy")
+  color       String   @default("#833ab4")
+  icon        String   @default("folder")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  entities Entity[]
+
+  @@index([userId])
+  @@index([parentId])
+}
+
+model Entity {
+  id      String  @id @default(cuid())
+  userId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId String?
+  group   Group?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  fullName         String
+  aliases          String[]
+  photo            String?
+  cpf              String?
+  rg               String?
+  cin              String?
+  gender           Gender?
+  birthDate        DateTime?
+  zodiacSign       String?
+  currentJob       String?
+  notes            String?      @db.Text
+  riskScore        Int          @default(0)
+  status           EntityStatus @default(INVESTIGATING)
+  dataCompleteness Int          @default(0)
+
+  fatherId         String?
+  father           Entity?  @relation("FatherRelation", fields: [fatherId], references: [id], onDelete: SetNull)
+  childrenAsFather Entity[] @relation("FatherRelation")
+  motherId         String?
+  mother           Entity?  @relation("MotherRelation", fields: [motherId], references: [id], onDelete: SetNull)
+  childrenAsMother Entity[] @relation("MotherRelation")
+  fatherName       String?
+  motherName       String?
+
+  phones            Phone[]
+  emails            Email[]
+  addresses         Address[]
+  socialProfiles    SocialProfile[]
+  documents         Document[]
+  vehicles          Vehicle[]
+  jobs              Job[]
+  educations        Education[]
+  financialAccounts FinancialAccount[]
+  credentials       Credential[]
+  noteWidgets       Note[]
+  media             Media[]
+
+  siblings     Entity[]        @relation("Siblings")
+  siblingOf    Entity[]        @relation("Siblings")
+  siblingNames SiblingName[]
+
+  relationships Relationship[] @relation("EntityRelationships")
+  relatedIn     Relationship[] @relation("RelatedEntityRelationships")
+
+  isBurner  Boolean   @default(false)
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([groupId])
+  @@index([fatherId])
+  @@index([motherId])
+  @@index([fullName])
+  @@index([birthDate])
+  @@index([status])
+}
+
+model SiblingName {
+  id        String   @id @default(cuid())
+  entityId  String
+  entity    Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+
+  @@index([entityId])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum EntityStatus {
+  INVESTIGATING
+  CLOSED
+  ARCHIVED
+}
+
+// ================= CONTATOS =================
+
+model Phone {
+  id         String   @id @default(cuid())
+  entityId   String
+  entity     Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  phone      String
+  label      String   @default("Principal")
+  isWhatsapp Boolean  @default(true)
+  isTelegram Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([entityId])
+}
+
+model Email {
+  id        String   @id @default(cuid())
+  entityId  String
+  entity    Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  email     String
+  label     String   @default("Principal")
+  createdAt DateTime @default(now())
+
+  @@index([entityId])
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  entityId     String
+  entity       Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  label        String   @default("Principal")
+  cep          String?
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+  country      String   @default("Brasil")
+  latitude     Float?
+  longitude    Float?
+  createdAt    DateTime @default(now())
+
+  @@index([entityId])
+  @@index([city])
+  @@index([state])
+}
+
+// ================= REDES SOCIAIS =================
+
+model SocialProfile {
+  id        String   @id @default(cuid())
+  entityId  String
+  entity    Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  platform  String
+  username  String
+  url       String?
+  avatarUrl String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([entityId])
+  @@index([platform])
+}
+
+// ================= DOCUMENTOS =================
+
+model Document {
+  id        String       @id @default(cuid())
+  entityId  String
+  entity    Entity       @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  type      DocumentType
+  value     String
+  createdAt DateTime     @default(now())
+
+  @@index([entityId])
+}
+
+enum DocumentType {
+  CNS
+  CNPJ
+  PIS
+  TITULO_ELEITOR
+  PASSAPORTE
+  CNH
+  CERTIDAO_NASCIMENTO
+  CERTIDAO_CASAMENTO
+}
+
+// ================= VEÍCULOS =================
+
+model Vehicle {
+  id        String   @id @default(cuid())
+  entityId  String
+  entity    Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  placa     String?
+  renavam   String?
+  chassi    String?
+  motor     String?
+  marca     String?
+  modelo    String?
+  ano       Int?
+  cor       String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([entityId])
+  @@index([placa])
+  @@index([renavam])
+}
+
+// ================= EMPREGOS & EDUCAÇÃO =================
+
+model Job {
+  id                 String    @id @default(cuid())
+  entityId           String
+  entity             Entity    @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  title              String
+  company            String?
+  cnpj               String?
+  companyTradeName   String?
+  companyLegalNature String?
+  companySize        String?
+  companyCapital     Decimal?  @db.Decimal(15, 2)
+  companyAddress     String?
+  companyPhone       String?
+  companyEmail       String?
+  companyActivity    String?
+  url                String?
+  isCurrent          Boolean   @default(true)
+  startDate          DateTime?
+  endDate            DateTime?
+  createdAt          DateTime  @default(now())
+
+  @@index([entityId])
+  @@index([cnpj])
+}
+
+model Education {
+  id          String   @id @default(cuid())
+  entityId    String
+  entity      Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  institution String
+  course      String?
+  degree      String?
+  startYear   Int?
+  endYear     Int?
+  isCurrent   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([entityId])
+}
+
+// ================= FINANCEIRO & CREDENCIAIS =================
+
+model FinancialAccount {
+  id          String      @id @default(cuid())
+  entityId    String
+  entity      Entity      @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  type        FinanceType
+  institution String?
+  identifier  String
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+
+  @@index([entityId])
+}
+
+enum FinanceType {
+  BANK_ACCOUNT
+  PIX
+  CREDIT_CARD
+  CRYPTO_WALLET
+}
+
+model Credential {
+  id           String   @id @default(cuid())
+  entityId     String
+  entity       Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  platform     String
+  username     String
+  passwordHash String
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([entityId])
+}
+
+// ================= NOTAS / WIDGETS =================
+
+model Note {
+  id        String   @id @default(cuid())
+  entityId  String
+  entity    Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  type      NoteType
+  title     String?
+  content   Json
+  layout    Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entityId])
+}
+
+enum NoteType {
+  TEXT
+  CHECKLIST
+  MAP
+  LINK_PREVIEW
+  CODE_BLOCK
+  VAULT
+  IMAGE
+}
+
+// ================= GRAFO DE RELAÇÕES =================
+
+model Relationship {
+  id              String           @id @default(cuid())
+  entityId        String
+  entity          Entity           @relation("EntityRelationships", fields: [entityId], references: [id], onDelete: Cascade)
+  relatedEntityId String
+  relatedEntity   Entity           @relation("RelatedEntityRelationships", fields: [relatedEntityId], references: [id], onDelete: Cascade)
+  type            RelationshipType
+  label           String?
+  notes           String?          @db.Text
+  createdAt       DateTime         @default(now())
+
+  @@unique([entityId, relatedEntityId, type])
+  @@index([entityId])
+  @@index([relatedEntityId])
+}
+
+enum RelationshipType {
+  FATHER
+  MOTHER
+  CHILD
+  SIBLING
+  SPOUSE
+  GRANDPARENT
+  FRIEND
+  BUSINESS_PARTNER
+  COLLEAGUE
+  OTHER
+}
+
+// ================= MÍDIA =================
+
+model Media {
+  id           String    @id @default(cuid())
+  entityId     String
+  entity       Entity    @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  filename     String
+  originalName String?
+  mimeType     String?
+  fileSize     Int?
+  type         MediaType @default(IMAGE)
+  sortOrder    Int       @default(0)
+  exifData     Json?
+  createdAt    DateTime  @default(now())
+
+  @@index([entityId])
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+// ================= AUDITORIA =================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String?
+  entityId   String?
+  entityName String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+model ActivityLog {
+  id         String         @id @default(cuid())
+  userId     String?
+  user       User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     ActivityAction
+  entityType String
+  entityId   String?
+  entityName String?
+  createdAt  DateTime       @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+}
+
+enum ActivityAction {
+  ADD
+  UPDATE
+  DELETE
+}

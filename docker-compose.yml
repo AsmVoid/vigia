@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:18.6
+    container_name: vigia-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vigia
+      POSTGRES_PASSWORD: vigia_secret
+      POSTGRES_DB: vigia_db
+    ports:
+      - "5432:5432"
+    volumes:
+      # Postgres 18+: montar na pasta PAI, não em /data
+      # O Postgres cria sozinho o subdiretório versionado (18/docker)
+      - vigia_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vigia -d vigia_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:8-alpine
+    container_name: vigia-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - vigia_redisdata:/data
+
+volumes:
+  vigia_pgdata:
+  vigia_redisdata:
