@@ -29,7 +29,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate || true",
+    "postinstall": "prisma generate --no-hints || true",
     "bootstrap": "bash scripts/bootstrap.sh",
     "setup": "bash scripts/setup.sh",
     "reset": "bash scripts/reset.sh",

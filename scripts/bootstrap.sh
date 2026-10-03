@@ -39,7 +39,7 @@ for arg in "$@"; do
 done
 
 # 1. Verificar Docker e Docker Compose
-echo -e "\n${BOLD}[1/5] Verificando Docker e Docker Compose...${NC}"
+echo -e "\n${BOLD}[1/6] Verificando Docker e Docker Compose...${NC}"
 if ! command -v docker &>/dev/null; then
   echo -e "${RED}[ERRO] Docker não está instalado.${NC}"
   echo -e "Por favor, instale o Docker (>= 24.0.0): https://docs.docker.com/engine/install/"
@@ -60,7 +60,7 @@ fi
 echo -e "${GREEN}✓ Docker e Docker Compose operacionais.${NC}"
 
 # 2. Configurar variáveis de ambiente (.env)
-echo -e "\n${BOLD}[2/5] Verificando arquivo de ambiente (.env)...${NC}"
+echo -e "\n${BOLD}[2/6] Verificando arquivo de ambiente (.env)...${NC}"
 if [ ! -f .env ]; then
   if [ -f .env.example ]; then
     cp .env.example .env
@@ -95,14 +95,30 @@ if grep -q "ENCRYPTION_KEY=.*gere-com-openssl" .env || grep -q 'ENCRYPTION_KEY="
 fi
 
 # 3. Subir contêineres do Docker
-echo -e "\n${BOLD}[3/5] Inicializando serviços (PostgreSQL 18 + Redis 8)...${NC}"
+echo -e "\n${BOLD}[3/6] Inicializando serviços (PostgreSQL 18 + Redis 8)...${NC}"
 docker compose up -d --wait --wait-timeout 180
 echo -e "${GREEN}✓ Contêineres iniciados e saudáveis.${NC}"
 
-# 4. Migrations, Views e Prisma Client
-echo -e "\n${BOLD}[4/5] Aplicando migrações e gerando Prisma Client...${NC}"
+# 4. Instalar dependências npm (se necessário)
+echo -e "\n${BOLD}[4/6] Verificando dependências do projeto (npm install)...${NC}"
+if [ ! -d "node_modules" ] || [ ! -f "node_modules/.bin/prisma" ]; then
+  echo -e "Instalando dependências via npm..."
+  npm install
+  echo -e "${GREEN}✓ Dependências instaladas com sucesso.${NC}"
+else
+  echo -e "${GREEN}✓ Dependências já instaladas em node_modules.${NC}"
+fi
+
+# 5. Migrations, Views e Prisma Client
+echo -e "\n${BOLD}[5/6] Aplicando migrações e gerando Prisma Client...${NC}"
 export PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION="yes"
-npx prisma migrate deploy
+
+PRISMA_BIN="./node_modules/.bin/prisma"
+if [ -f "$PRISMA_BIN" ]; then
+  "$PRISMA_BIN" migrate deploy
+else
+  npx prisma migrate deploy
+fi
 echo -e "${GREEN}✓ Migrações aplicadas com sucesso.${NC}"
 
 if [ -f prisma/views.sql ]; then
@@ -110,17 +126,25 @@ if [ -f prisma/views.sql ]; then
   echo -e "${GREEN}✓ Views SQL analíticas atualizadas.${NC}"
 fi
 
-npx prisma generate
+if [ -f "$PRISMA_BIN" ]; then
+  "$PRISMA_BIN" generate --no-hints
+else
+  npx prisma generate --no-hints
+fi
 echo -e "${GREEN}✓ Prisma Client gerado em generated/prisma.${NC}"
 
 # Seed opcional
 if [ "$WITH_SEED" = true ]; then
   echo -e "\n${CYAN}[SEED] Populando banco com dados de demonstração...${NC}"
-  npx prisma db seed
+  if [ -f "$PRISMA_BIN" ]; then
+    "$PRISMA_BIN" db seed
+  else
+    npx prisma db seed
+  fi
   echo -e "${GREEN}✓ Dados de demonstração inseridos com sucesso.${NC}"
 fi
 
-# 5. Resumo e Próximos Passos
+# 6. Resumo e Próximos Passos
 echo -e "\n${GREEN}${BOLD}════════════════════════════════════════════════════════════════${NC}"
 echo -e "${GREEN}${BOLD}   🛡️  V.I.G.I.A PRONTO PARA USO!                              ${NC}"
 echo -e "${GREEN}${BOLD}════════════════════════════════════════════════════════════════${NC}"
