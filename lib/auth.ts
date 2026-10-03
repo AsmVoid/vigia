@@ -24,6 +24,7 @@ export const auth = betterAuth({
       displayName: {
         type: "string",
         required: false,
+        defaultValue: "Investigador",
       },
       photo: {
         type: "string",

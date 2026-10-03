@@ -172,14 +172,13 @@ Desenvolvido para suceder o antigo projeto **A.E.G.I.S** (desenvolvido em PHP/My
 ### Opção 1: Quick-Start Universal (Recomendado)
 
 ```bash
-# 1. Clonar o repositório
 git clone https://github.com/AsmVoid/vigia.git
 cd vigia
-
-# 2. Executar o assistente de setup automatizado
-npm run setup
+bash scripts/bootstrap.sh   # sobe Docker, aplica migrations, gera Prisma Client
+npm run dev                 # http://localhost:3000
+# Registre sua primeira conta em /register (não há login padrão)
 ```
-O script `setup.sh` verifica dependências, cria o `.env` com chaves seguras geradas via OpenSSL, sobe o PostgreSQL 18 e o Redis 8 no Docker, instala dependências e aplica as migrações e Views.
+O script `bootstrap.sh` prepara automaticamente o arquivo `.env` com chaves criptográficas geradas via OpenSSL, inicializa o PostgreSQL 18 e o Redis 8 no Docker, executa as migrações e Views SQL e compila o Prisma Client.
 
 ### Opção 2: Instalação por Distribuição Linux
 
@@ -319,6 +318,14 @@ Durante o desenvolvimento do V.I.G.I.A, identificamos particularidades críticas
    - Para não depender de chaves pagas ou rate limits externos, utilizamos as camadas gratuitas de alto contraste do CartoDB:
    - Modo Escuro: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png`
    - Modo Claro: `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png`
+
+### 🔧 Troubleshooting pós-clone
+
+Se você acabou de clonar o repositório em uma nova máquina ou ambiente e encontrar algum erro:
+
+- **"Erro 422 ao criar conta"** → rode `npm install && bash scripts/bootstrap.sh`
+- **"Module not found @/generated/prisma/client"** → `npx prisma generate`
+- **"relation does not exist"** → `npx prisma migrate deploy`
 
 ---
 

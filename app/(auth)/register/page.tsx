@@ -55,7 +55,8 @@ export default function RegisterPage() {
       }
 
       toast.success("Conta criada com sucesso!");
-      router.push("/login");
+      router.push("/dashboard");
+      router.refresh();
     } catch {
       toast.error("Erro ao registrar. Tente novamente.");
     } finally {
