@@ -1,3 +1,5 @@
+name: vigia
+
 services:
   db:
     image: postgres:18.6
