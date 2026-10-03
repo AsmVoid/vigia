@@ -6,7 +6,7 @@ Agradecemos profundamente o seu interesse em contribuir com a evolução do **V.
 
 ## 🧭 Princípios de Desenvolvimento
 
-Antes de submeter código, leia o Documento de Requisitos do Produto em [docs/PRD.md](PRD.md). O V.I.G.I.A segue diretrizes estritas:
+Antes de submeter código, observe as diretrizes fundamentais da plataforma:
 1. **Design OLED First**: Interfaces focadas em preto absoluto (`#000000`), alto contraste e ausência de ruído visual.
 2. **Segurança por Padrão**: Todos os dados sensíveis devem ser cifrados e todas as rotas protegidas pelo middleware `proxy.ts`.
 3. **Privacidade e Ética**: O sistema é desenhado para dados públicos e cooperação legal; **não implementamos web scrapers evasivos** nem ferramentas de invasão de privacidade.

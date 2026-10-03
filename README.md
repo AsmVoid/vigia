@@ -341,9 +341,6 @@ Para aprofundar-se em aspectos específicos do sistema, consulte os documentos n
 | [docs/SECURITY.md](docs/SECURITY.md) | Modelo de ameaças, políticas de criptografia e guia de hardening para produção |
 | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Orientações para desenvolvedores, convenção de commits e fluxo de PRs |
 | [docs/CHANGELOG.md](docs/CHANGELOG.md) | Histórico completo de versões, novas funcionalidades e correções de bugs |
-| [docs/PUBLISHING.md](docs/PUBLISHING.md) | Instruções para publicação oficial do repositório no GitHub |
-| [docs/PRD.md](docs/PRD.md) | Documento de Requisitos do Produto original |
-| [docs/AI-PROMPTS.md](docs/AI-PROMPTS.md) | Registro de prompts e instruções de engenharia do sistema |
 
 ---
 

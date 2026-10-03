@@ -5,20 +5,20 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ---
 
-## [1.0.0] - 2026-09-28
+## [1.0.0] - 2026-10-03
 
-### 🚀 Lançamento Inicial (Release v1.0.0)
+### 🚀 Lançamento Inicial Definitivo (Release v1.0.0)
 
-Primeira versão pública estável da plataforma **V.I.G.I.A** (*Vigilância Integrada e Gestão de Informações Analíticas*), sucessora moderna da linhagem A.E.G.I.S (2024), totalmente reescrita em Next.js 16, TypeScript, PostgreSQL 18 e TailwindCSS v4.
+Primeira versão pública estável e definitiva da plataforma **V.I.G.I.A** (*Vigilância Integrada e Gestão de Informações Analíticas*), sucessora moderna da linhagem A.E.G.I.S (2024), totalmente desenvolvida em Next.js 16, TypeScript, PostgreSQL 18, Redis 8 e TailwindCSS v4.
 
 #### ✨ Principais Módulos & Recursos Implementados:
-- **Autenticação Avançada & Segurança de Acesso**:
-  - Sistema de contas via Better Auth com sessões persistentes e isoladas por usuário.
+- **Autenticação Avançada & Isolamento Multi-Tenant**:
+  - Sistema de contas via Better Auth com sessões persistentes e isolamento estrito de dados por usuário (`userId` em entidades, grupos e logs de atividade).
   - Segundo Fator de Autenticação (**2FA TOTP**) nativo com geração de QR Code dinâmico e suporte a códigos de backup de emergência.
   - Proteção de rotas em middleware unificado (`proxy.ts`).
-  - Isolamento estrito de base de dados por conta (*multi-tenant*): cada investigador visualiza e manipula exclusivamente seus próprios registros.
+  - Redirecionamento automático pós-cadastro direto para o `/dashboard`.
 
-- **Dashboard Analítico Modular (EvilCharts Redesign)**:
+- **Dashboard Analítico Modular**:
   - 10 widgets interativos com ordenação livre via Drag-and-Drop (`@dnd-kit`).
   - Indicador Gauge de Risco Médio das pessoas investigadas.
   - Gráfico de Rosca de Distribuição por Organizações/Facções.
@@ -55,22 +55,27 @@ Primeira versão pública estável da plataforma **V.I.G.I.A** (*Vigilância Int
   - Quadro de investigação com 7 tipos de cartões: Notas Rápidas, Hipóteses, Checklists de Diligências, Alertas Críticos, Mídias Anexadas, Lembretes e Cofre Confidencial protegido por senha própria.
 
 - **Enriquecimento OSINT Automatizado**:
-  - Conectores nativos para ViaCEP (autocompletar endereço), BrasilAPI (dados cadastrais de CNPJ), OpenStreetMap Nominatim (geocodificação reversa), IPinfo e Have I Been Pwned.
+  - Conectores nativos para ViaCEP (autocompletar endereço), BrasilAPI (dados cadastrais de CNPJ) e OpenStreetMap Nominatim (geocodificação reversa).
 
 - **Excelência Visual & UI Motion Pass**:
-  - Fundo dinâmico com Shader WebGL de alta fidelidade e gradiente VIGIA/Instagram.
+  - Fundo dinâmico com Shader WebGL de alta fidelidade e gradiente VIGIA.
   - Temas **BLACK OLED** (preto `#000000` absoluto) e **WHITE OLED** com suporte a alternância em tempo real.
   - Microinterações e animações de transição suaves alimentadas por `motion/react`.
 
 - **Automação Operacional & Scripts**:
-  - `scripts/setup.sh`: Bootstrap completo e idempotente do ambiente.
+  - `scripts/bootstrap.sh`: Inicialização rápida *one-command* com instalação automática de dependências, geração de chaves via OpenSSL, subida de contêineres Docker, migrações e Prisma Client com `--no-hints`.
+  - `scripts/setup.sh`: Assistente detalhado de setup e verificação de pré-requisitos.
   - `scripts/reset.sh`: Factory reset com limpeza de banco, uploads e Redis.
   - `scripts/backup.sh` & `scripts/restore.sh`: Rotinas automatizadas de dump e restauração compactada.
   - `scripts/update.sh`: Script de atualização automatizada via Git.
 
-#### 🐛 Correções Realizadas durante o Ciclo de Testes:
-- Correção de loop de redirecionamento no fluxo de login após ativação do 2FA.
-- Resolução do problema de isolamento de dados entre diferentes contas cadastradas.
-- Correção de sobreposição de botões de zoom e controles no canvas do grafo.
-- Eliminação do pânico de compilação em loop do Turbopack e desativação do indicador "Rendering...".
-- Eliminação do recuo cíclico de nós arrastados no Grafo, assegurando estabilidade permanente da posição customizada pelo usuário.
+#### 🐛 Correções & Estabilização da Versão Definitiva:
+- **Portabilidade pós-clone**:
+  - Criação de `scripts/bootstrap.sh` para configuração imediata do projeto a partir de um clone limpo.
+  - Adição de `postinstall: "prisma generate --no-hints || true"` no `package.json`, garantindo a existência do cliente Prisma logo após o `npm install`.
+  - Correção no Better Auth (`additionalFields`): mapeamento de `username` no sign-up resolvendo o erro 422.
+  - Criação da migração relacional `20260927020000_add_multitenant_user_id` adicionando as colunas `userId` em `Group`, `Entity` e `ActivityLog`.
+  - Resolução de distorção de fuso horário (UTC vs UTC-3) na exibição de datas de nascimento e contagem de aniversário via utilitário `lib/date-utils.ts`.
+  - Definição do nome do projeto no `docker-compose.yml` (`name: vigia`) para evitar conflito de contêineres entre diretórios clonados distintos.
+  - Supressão de prompts interativos na compilação do Prisma Client (`--no-hints`).
+  - Higienização da documentação pública, removendo notas internas de engenharia e arquivos desnecessários.

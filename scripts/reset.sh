@@ -56,7 +56,7 @@ echo -e "${GREEN}✓ public/uploads/people/ limpo (apenas .gitkeep preservado).$
 
 # 2. Reset do banco de dados via Prisma Migrate
 echo -e "\n${BOLD}[2/4] Resetando banco de dados PostgreSQL...${NC}"
-PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION="yes" PRISMA_SEED=false npx prisma migrate reset --force
+PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION="yes" npx prisma migrate reset --force
 npm run db:views
 echo -e "${GREEN}✓ Banco de dados recriado e views SQL reaplicadas com sucesso.${NC}"
 
