@@ -8,6 +8,7 @@ import { SocialIcon, formatSocialUrl } from "@/components/shared/social-icons";
 import { Calendar, Briefcase, ArrowRight, Shield, Edit, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getZodiacBadge, getZodiacSign } from "@/lib/zodiac";
+import { formatBirthDate, calculateAge } from "@/lib/date-utils";
 import { ZodiacIcon } from "@/components/shared/zodiac-icon";
 import { GenderIcon } from "@/components/shared/gender-icon";
 import { motion, useReducedMotion } from "motion/react";
@@ -47,23 +48,12 @@ export function PersonCard({ person }: PersonCardProps) {
 
   // Calculate age from birthDate
   const age = React.useMemo(() => {
-    if (!person.birthDate) return null;
-    const birth = new Date(person.birthDate);
-    if (isNaN(birth.getTime())) return null;
-    const diff = Date.now() - birth.getTime();
-    return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+    return calculateAge(person.birthDate);
   }, [person.birthDate]);
 
   // Format birthDate to DD/MM/AAAA
   const formattedBirth = React.useMemo(() => {
-    if (!person.birthDate) return null;
-    const birth = new Date(person.birthDate);
-    if (isNaN(birth.getTime())) return null;
-    return birth.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return formatBirthDate(person.birthDate);
   }, [person.birthDate]);
 
   const zodiac = React.useMemo(() => {

@@ -31,6 +31,7 @@ import {
   revealCredentialAction,
 } from "@/app/(dashboard)/entity/actions";
 import { getZodiacBadge, getZodiacSign } from "@/lib/zodiac";
+import { formatBirthDate, getBirthdayCountdown } from "@/lib/date-utils";
 import { ZodiacIcon } from "@/components/shared/zodiac-icon";
 import { GenderIcon } from "@/components/shared/gender-icon";
 import { extractAddressMaps } from "@/lib/maps";
@@ -160,39 +161,10 @@ export function InformationTab({ entity }: InformationTabProps) {
 
   // Birthday Countdown calculation: "🎂 em X dias"
   const birthdayCountdown = React.useMemo(() => {
-    if (!entity.birthDate) return null;
-    const birth = new Date(entity.birthDate);
-    if (isNaN(birth.getTime())) return null;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const nextBirthday = new Date(
-      today.getFullYear(),
-      birth.getMonth(),
-      birth.getDate()
-    );
-    nextBirthday.setHours(0, 0, 0, 0);
-
-    if (nextBirthday < today) {
-      nextBirthday.setFullYear(today.getFullYear() + 1);
-    }
-
-    const diffTime = nextBirthday.getTime() - today.getTime();
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return "🎂 É hoje! Parabéns!";
-    if (diffDays === 1) return "🎂 É amanhã!";
-    return `🎂 em ${diffDays} dias`;
+    return getBirthdayCountdown(entity.birthDate);
   }, [entity.birthDate]);
 
-  const formattedBirth = entity.birthDate
-    ? new Date(entity.birthDate).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-    : null;
+  const formattedBirth = formatBirthDate(entity.birthDate);
 
   // Toggle reveal financial account
   const handleToggleRevealFinance = async (accountId: string) => {

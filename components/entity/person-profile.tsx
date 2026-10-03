@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/tooltip";
 import { SocialIcon, formatSocialUrl } from "@/components/shared/social-icons";
 import { EntityDeleteDialog } from "@/components/entity/entity-delete-dialog";
+import { calculateAge } from "@/lib/date-utils";
 import { updateInlineNotesAction } from "@/app/(dashboard)/entity/actions";
 import { cn } from "@/lib/utils";
 import { getZodiacBadge, getZodiacSign } from "@/lib/zodiac";
@@ -91,11 +92,7 @@ export function PersonProfile({
 
   // Age calculation
   const age = React.useMemo(() => {
-    if (!entity.birthDate) return null;
-    const birth = new Date(entity.birthDate);
-    if (isNaN(birth.getTime())) return null;
-    const diff = Date.now() - birth.getTime();
-    return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+    return calculateAge(entity.birthDate);
   }, [entity.birthDate]);
 
   const initials = entity.fullName

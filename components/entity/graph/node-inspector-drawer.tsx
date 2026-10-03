@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { IgAvatar } from "@/components/shared/ig-avatar";
+import { formatBirthDate, calculateAge } from "@/lib/date-utils";
 import {
   User,
   Phone,
@@ -97,12 +98,7 @@ export function NodeInspectorDrawer({
     : "ID";
 
   // Calculate age if birthDate exists
-  let calculatedAge: number | null = null;
-  if (data?.birthDate) {
-    const bDate = new Date(data.birthDate);
-    const diff = Date.now() - bDate.getTime();
-    calculatedAge = Math.abs(new Date(diff).getUTCFullYear() - 1970);
-  }
+  const calculatedAge = calculateAge(data?.birthDate);
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -236,8 +232,8 @@ export function NodeInspectorDrawer({
                     <span className="text-[10px] text-muted-foreground block">Nascimento / Idade</span>
                     <span className="font-semibold text-foreground">
                       {data.birthDate
-                        ? `${new Date(data.birthDate).toLocaleDateString("pt-BR")} ${
-                            calculatedAge ? `(${calculatedAge} anos)` : ""
+                        ? `${formatBirthDate(data.birthDate)} ${
+                            calculatedAge !== null ? `(${calculatedAge} anos)` : ""
                           }`
                         : "Não informado"}
                     </span>
